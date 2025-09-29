@@ -1,0 +1,361 @@
+{
+  "name": "Flujo #1: Integracion de WhatsApp con Zammad - Comunicacion Cliente - Zammad",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "4202b5a9-db9d-46fd-bbad-0613421689a1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        112,
+        0
+      ],
+      "id": "c9a0b920-2e9b-4720-9fdd-034a1a5bbe6f",
+      "name": "Webhook",
+      "webhookId": "4202b5a9-db9d-46fd-bbad-0613421689a1"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "query": "=phone: {{ $json.body.body.from_number.toNumber() }}"
+        }
+      },
+      "type": "n8n-nodes-base.zammad",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "869346db-9abc-4fd7-b4ba-2eaf74020c73",
+      "name": "SearchExistentUser",
+      "alwaysOutputData": true,
+      "credentials": {
+        "zammadTokenAuthApi": {
+          "id": "YbrHH9xbUJKk2dVp",
+          "name": "Zammad Basic Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "firstname": "Usuario de WhatsApp",
+        "lastname": "={{ $('Webhook').item.json.body.body.from_number }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.zammad",
+      "typeVersion": 1,
+      "position": [
+        800,
+        160
+      ],
+      "id": "703c5486-aac3-401b-a476-c8fa6608069e",
+      "name": "Create a user",
+      "credentials": {
+        "zammadTokenAuthApi": {
+          "id": "YbrHH9xbUJKk2dVp",
+          "name": "Zammad Basic Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "ticket",
+        "title": "=Ticket de {{ $('Webhook').item.json.body.body.from_number }}",
+        "group": "Users",
+        "customer": "={{ $json.email || \"\"}}",
+        "article": {
+          "articleDetails": {
+            "subject": "={{ $('Webhook').item.json.body.body.from_number }}",
+            "body": "={{ $('Webhook').item.json.body.body }}"
+          }
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.zammad",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        176
+      ],
+      "id": "a0eb76b8-d1e7-4cc1-aebe-61c77a852ac4",
+      "name": "Create a ticket",
+      "credentials": {
+        "zammadTokenAuthApi": {
+          "id": "YbrHH9xbUJKk2dVp",
+          "name": "Zammad Basic Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "85e27605-38be-4d4e-8854-e87eec3b99d9",
+              "leftValue": "={{ $items(\"SearchExistentUser\")[0].json.id }}",
+              "rightValue": "={{ 0 }}",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "62ce323c-832b-4770-95ee-49bcd71995da",
+      "name": "Search User Existent - IF"
+    },
+    {
+      "parameters": {
+        "url": "=http://192.168.1.100:8080/api/v1/tickets/search?query=customer.id:{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1216,
+        0
+      ],
+      "id": "3f7fb942-0497-4cd5-9a71-6d0b7e6ed04c",
+      "name": "Search Ticket Existent By User",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "itEDTbBX5nKfjtPE",
+          "name": "Contacto Folkode"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d4596519-351c-42ca-bf52-ece7f4d48fd1",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        0
+      ],
+      "id": "ec4e12e3-1cbe-4af0-b71b-66524c85a8de",
+      "name": "Search Ticket Existent By User - IF"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.100:8080/api/v1/ticket_articles",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"ticket_id\":\"{{ $json.id }}\",\n  \"body\": \"{{ $('Webhook').item.json.body.body.message }}\",\n  \"internal\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2096,
+        0
+      ],
+      "id": "0ddcb5f1-0e56-46fc-9b00-d43f2efa36af",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "itEDTbBX5nKfjtPE",
+          "name": "Contacto Folkode"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1008,
+        0
+      ],
+      "id": "931a30ed-58b2-444f-b13a-a9ae099ea4aa",
+      "name": "Merging User Data"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1904,
+        0
+      ],
+      "id": "abb87c3e-478c-4f36-bbf2-78ae9e9d049f",
+      "name": "Merging Ticket Data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "SearchExistentUser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SearchExistentUser": {
+      "main": [
+        [
+          {
+            "node": "Search User Existent - IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a user": {
+      "main": [
+        [
+          {
+            "node": "Merging User Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Search User Existent - IF": {
+      "main": [
+        [
+          {
+            "node": "Merging User Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a user",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Ticket Existent By User": {
+      "main": [
+        [
+          {
+            "node": "Search Ticket Existent By User - IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Ticket Existent By User - IF": {
+      "main": [
+        [
+          {
+            "node": "Merging Ticket Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a ticket": {
+      "main": [
+        [
+          {
+            "node": "Merging Ticket Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merging User Data": {
+      "main": [
+        [
+          {
+            "node": "Search Ticket Existent By User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merging Ticket Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "af37493d-c760-4474-bc41-4c62e2530590",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1253508b111020ab27c4839575412d1106b9506b521d887e9dd2bc882f4ea0c1"
+  },
+  "id": "bg9OnXU3ZhtyYXzT",
+  "tags": []
+}

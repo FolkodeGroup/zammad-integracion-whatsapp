@@ -1,0 +1,20 @@
+version: '3.7'
+
+services:
+  n8n:
+    image: n8nio/n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      # Carga las variables desde el archivo .env
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+      - ZAMMAD_URL=${ZAMMAD_URL}
+      - ZAMMAD_USER=${ZAMMAD_USER}
+      - ZAMMAD_PASSWORD=${ZAMMAD_PASSWORD}
+      - ZAMMAD_TOKEN_ACCESS=${ZAMMAD_TOKEN_ACCESS}
+      # Zona horaria para que los logs sean correctos
+      - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires 
+    volumes:
+      - ./n8n_data:/home/node/.n8n
