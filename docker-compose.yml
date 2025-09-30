@@ -6,6 +6,8 @@ services:
     restart: always
     ports:
       - "5678:5678"
+    env_file:
+      - .env
     environment:
       # Carga las variables desde el archivo .env
       - N8N_BASIC_AUTH_USER=${N8N_USER}
@@ -18,3 +20,5 @@ services:
       - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires 
     volumes:
       - ./n8n_data:/home/node/.n8n
+      - ./workflows:/app/workflows
+      - ./n8n-config.json:/home/node/.n8n/n8n-config.json

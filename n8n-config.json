@@ -1,0 +1,8 @@
+{
+  "environmentVariables": {
+    "ZAMMAD_URL": "{{$env.ZAMMAD_URL}}",
+    "ZAMMAD_USER": "{{$env.ZAMMAD_USER}}",
+    "ZAMMAD_PASSWORD": "{{$env.ZAMMAD_PASSWORD}}",
+    "ZAMMAD_TOKEN_ACCESS": "{{$env.ZAMMAD_TOKEN_ACCESS}}"
+  }
+}
