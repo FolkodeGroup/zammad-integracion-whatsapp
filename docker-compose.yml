@@ -31,3 +31,16 @@ services:
     # Sobrescribe el entrypoint por defecto de la imagen de Docker.
     # Le decimos que ejecute nuestro script personalizado en su lugar.
     entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
+
+    networks:
+      - default # Se conecta a la red por defecto de este compose (buena práctica)
+      - zammad_network # Se conecta a nuestra red externa declarada abajo
+# --- NUEVA SECCIÓN AL FINAL DEL ARCHIVO ---
+# Aquí declaramos las redes que usamos.
+networks:
+  default: {} # Define la red por defecto para este servicio
+  zammad_network:
+    # Le decimos a Docker Compose que esta red ya existe y no debe intentar crearla.
+    external: true
+    # ¡CRÍTICO! Aquí pones el nombre real de la red que encontraste en el Paso 1.
+    name: zammad-n8n_default
