@@ -1,24 +1,20 @@
-version: '3.7'
+version: '3.8'
 
 services:
   n8n:
-    image: n8nio/n8n
-    restart: always
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
     ports:
       - "5678:5678"
-    env_file:
-      - .env
     environment:
-      # Carga las variables desde el archivo .env
-      - N8N_BASIC_AUTH_USER=${N8N_USER}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
-      - ZAMMAD_URL=${ZAMMAD_URL}
-      - ZAMMAD_USER=${ZAMMAD_USER}
-      - ZAMMAD_PASSWORD=${ZAMMAD_PASSWORD}
-      - ZAMMAD_TOKEN_ACCESS=${ZAMMAD_TOKEN_ACCESS}
-      # Zona horaria para que los logs sean correctos
-      - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires 
+      - GENERIC_TIMEZONE=-03
+      - TZ=America/Argentina/Buenos_Aires
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=true
     volumes:
+      # --- CAMBIO CLAVE ---
+      # En lugar de un volumen con nombre, usamos un "bind mount".
+      # './n8n_data' significa: "mapea una carpeta llamada 'n8n_data' que está
+      # en el MISMO directorio que este archivo docker-compose.yml".
       - ./n8n_data:/home/node/.n8n
-      - ./workflows:/app/workflows
-      - ./n8n-config.json:/home/node/.n8n/n8n-config.json
