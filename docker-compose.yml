@@ -12,9 +12,22 @@ services:
       - TZ=America/Argentina/Buenos_Aires
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
       - N8N_RUNNERS_ENABLED=true
+      # --- NUEVA VARIABLE DE ENTORNO ---
+      # Le dice a n8n que no inicie el asistente de configuración inicial,
+      # ya que estamos configurando todo automáticamente.
+      - N8N_INITIAL_SETUP_COMPLETE=true
     volumes:
-      # --- CAMBIO CLAVE ---
-      # En lugar de un volumen con nombre, usamos un "bind mount".
-      # './n8n_data' significa: "mapea una carpeta llamada 'n8n_data' que está
-      # en el MISMO directorio que este archivo docker-compose.yml".
+      # Mapea la carpeta de datos persistentes.
       - ./n8n_data:/home/node/.n8n
+      # --- NUEVO BIND MOUNT ---
+      # Mapea tu carpeta local 'workflows' a una carpeta '/workflows'
+      # dentro del contenedor, para que el script de importación pueda encontrarla.
+      - ./workflows:/workflows
+      # --- NUEVO BIND MOUNT PARA EL SCRIPT ---
+      # Mapea nuestro script de entrypoint personalizado.
+      - ./docker-entrypoint.sh:/docker-entrypoint.sh
+    
+    # --- NUEVA SECCIÓN: ENTRYPOINT ---
+    # Sobrescribe el entrypoint por defecto de la imagen de Docker.
+    # Le decimos que ejecute nuestro script personalizado en su lugar.
+    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
