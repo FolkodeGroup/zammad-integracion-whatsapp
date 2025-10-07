@@ -10,33 +10,34 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        112,
-        0
+        224,
+        -16
       ],
       "id": "c9a0b920-2e9b-4720-9fdd-034a1a5bbe6f",
       "name": "Webhook",
-      "webhookId": "4202b5a9-db9d-46fd-bbad-0613421689a1"
+      "webhookId": "4202b5a9-db9d-46fd-bbad-0613421689a1",
+      "alwaysOutputData": false
     },
     {
       "parameters": {
         "operation": "getAll",
         "returnAll": true,
         "filters": {
-          "query": "=email:{{  $json.body.body.from_number.replace(\"+\",\"\")}}@folkode.org"
+          "query": "=email:{{ $json.body.entry[0].changes[0].value.contacts[0].wa_id }}@folkode.org"
         }
       },
       "type": "n8n-nodes-base.zammad",
       "typeVersion": 1,
       "position": [
         416,
-        0
+        -16
       ],
       "id": "869346db-9abc-4fd7-b4ba-2eaf74020c73",
       "name": "SearchExistentUser",
       "alwaysOutputData": true,
       "credentials": {
         "zammadTokenAuthApi": {
-          "id": "llLfnFF48E4N0Sw1",
+          "id": "pbT2OLcSmkJetuNA",
           "name": "Zammad Basic Auth account"
         }
       }
@@ -44,11 +45,11 @@
     {
       "parameters": {
         "firstname": "Usuario de WhatsApp",
-        "lastname": "={{ $('Webhook').item.json.body.body.from_number }}",
+        "lastname": "=+{{ $('Webhook').item.json.body.entry[0].changes[0].value.contacts[0].wa_id }}",
         "additionalFields": {
-          "email": "={{ $('Webhook').item.json.body.body.from_number.replace(\"+\",\"\")}}@folkode.org",
-          "phone": "={{ $('Webhook').item.json.body.body.from_number }}",
-          "mobile": "={{ $('Webhook').item.json.body.body.from_number }}"
+          "email": "={{ $('Webhook').item.json.body.entry[0].changes[0].value.contacts[0].wa_id }}@folkode.org",
+          "phone": "={{ $('Webhook').item.json.body.entry[0].changes[0].value.contacts[0].wa_id }}",
+          "mobile": "={{ $('Webhook').item.json.body.entry[0].changes[0].value.contacts[0].wa_id }}"
         }
       },
       "type": "n8n-nodes-base.zammad",
@@ -61,7 +62,7 @@
       "name": "Create a user",
       "credentials": {
         "zammadTokenAuthApi": {
-          "id": "llLfnFF48E4N0Sw1",
+          "id": "pbT2OLcSmkJetuNA",
           "name": "Zammad Basic Auth account"
         }
       }
@@ -69,13 +70,14 @@
     {
       "parameters": {
         "resource": "ticket",
-        "title": "=Ticket de {{ $('Webhook').item.json.body.body.from_number }}",
+        "title": "=Ticket de +{{ $('Webhook').item.json.body.entry[0].changes[0].value.contacts[0].wa_id }}",
         "group": "Users",
-        "customer": "={{ $json.email || \"\"}}",
+        "customer": "={{ $('Webhook').item.json.body.entry[0].changes[0].value.contacts[0].wa_id }}@folkode.org",
         "article": {
           "articleDetails": {
-            "subject": "={{ $('Webhook').item.json.body.body.from_number }}",
-            "body": "={{ $('Webhook').item.json.body.body }}"
+            "subject": "={{ $('Webhook').item.json.body.entry[0].changes[0].value.contacts[0].wa_id }}",
+            "body": "={{ $('Webhook').item.json.body.entry[0].changes[0].value.messages[0].text.body }}",
+            "reply_to": "={{ $('Webhook').item.json.body.value.contacts[0].wa_id }}"
           }
         },
         "additionalFields": {}
@@ -90,7 +92,7 @@
       "name": "Create a ticket",
       "credentials": {
         "zammadTokenAuthApi": {
-          "id": "llLfnFF48E4N0Sw1",
+          "id": "pbT2OLcSmkJetuNA",
           "name": "Zammad Basic Auth account"
         }
       }
@@ -124,14 +126,14 @@
       "typeVersion": 2.2,
       "position": [
         624,
-        0
+        -16
       ],
       "id": "62ce323c-832b-4770-95ee-49bcd71995da",
       "name": "Search User Existent - IF"
     },
     {
       "parameters": {
-        "url": "=http://192.168.1.100:8080/api/v1/tickets/search?query=title:\"Ticket+de{{ $json.lastname }}\"",
+        "url": "=http://zammad-nginx:8080/api/v1/tickets/search?query=title:\"Ticket+de{{ $json.lastname }}\"",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBasicAuth",
         "options": {}
@@ -147,8 +149,8 @@
       "alwaysOutputData": true,
       "credentials": {
         "httpBasicAuth": {
-          "id": "oTgWlFWC5w902wQ0",
-          "name": "Folkode Group"
+          "id": "AIfXt1EoGvMR7bv0",
+          "name": "Unnamed credential"
         }
       }
     },
@@ -189,12 +191,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://192.168.1.100:8080/api/v1/ticket_articles",
+        "url": "http://zammad-nginx:8080/api/v1/ticket_articles",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBasicAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"ticket_id\":\"{{ $json.id }}\",\n  \"body\": \"{{ $('Webhook').item.json.body.body.message }}\",\n  \"internal\": true\n}",
+        "jsonBody": "={\n  \"ticket_id\":\"{{ $json.id }}\",\n  \"body\": \"{{ $('Webhook').item.json.body.entry[0].changes[0].value.messages[0].text.body }}\",\n  \"internal\": true\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -207,8 +209,8 @@
       "name": "HTTP Request",
       "credentials": {
         "httpBasicAuth": {
-          "id": "oTgWlFWC5w902wQ0",
-          "name": "Folkode Group"
+          "id": "AIfXt1EoGvMR7bv0",
+          "name": "Unnamed credential"
         }
       }
     },
@@ -233,26 +235,6 @@
       ],
       "id": "abb87c3e-478c-4f36-bbf2-78ae9e9d049f",
       "name": "Merging Ticket Data"
-    },
-    {
-      "parameters": {
-        "resource": "ticket",
-        "operation": "getAll"
-      },
-      "type": "n8n-nodes-base.zammad",
-      "typeVersion": 1,
-      "position": [
-        1152,
-        352
-      ],
-      "id": "45b62cef-8394-4306-b92d-5e4bca8a2958",
-      "name": "Get many tickets",
-      "credentials": {
-        "zammadTokenAuthApi": {
-          "id": "llLfnFF48E4N0Sw1",
-          "name": "Zammad Basic Auth account"
-        }
-      }
     }
   ],
   "pinData": {},
@@ -265,7 +247,8 @@
             "type": "main",
             "index": 0
           }
-        ]
+        ],
+        []
       ]
     },
     "SearchExistentUser": {
@@ -371,14 +354,14 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "2aff6431-a391-45d9-bd63-2a69bd6f6e1f",
+  "versionId": "9469358d-98f2-419d-90a6-3846458047d0",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "2758f9abb4111ddb38d4a60c4157a6b35df7ebefd4b391af4035a063ed6060a3"
+    "instanceId": "8c087f8f02fd25d814e73f24c1c6c687a2548df4e9a320442a152a523abab4ef"
   },
   "id": "bg9OnXU3ZhtyYXzT",
   "tags": []
