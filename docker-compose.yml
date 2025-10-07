@@ -1,24 +1,46 @@
-version: '3.7'
+version: '3.8'
 
 services:
   n8n:
-    image: n8nio/n8n
-    restart: always
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
     ports:
       - "5678:5678"
-    env_file:
-      - .env
     environment:
-      # Carga las variables desde el archivo .env
-      - N8N_BASIC_AUTH_USER=${N8N_USER}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
-      - ZAMMAD_URL=${ZAMMAD_URL}
-      - ZAMMAD_USER=${ZAMMAD_USER}
-      - ZAMMAD_PASSWORD=${ZAMMAD_PASSWORD}
-      - ZAMMAD_TOKEN_ACCESS=${ZAMMAD_TOKEN_ACCESS}
-      # Zona horaria para que los logs sean correctos
-      - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires 
+      - GENERIC_TIMEZONE=-03
+      - TZ=America/Argentina/Buenos_Aires
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=true
+      # --- NUEVA VARIABLE DE ENTORNO ---
+      # Le dice a n8n que no inicie el asistente de configuración inicial,
+      # ya que estamos configurando todo automáticamente.
+      - N8N_INITIAL_SETUP_COMPLETE=true
     volumes:
+      # Mapea la carpeta de datos persistentes.
       - ./n8n_data:/home/node/.n8n
-      - ./workflows:/app/workflows
-      - ./n8n-config.json:/home/node/.n8n/n8n-config.json
+      # --- NUEVO BIND MOUNT ---
+      # Mapea tu carpeta local 'workflows' a una carpeta '/workflows'
+      # dentro del contenedor, para que el script de importación pueda encontrarla.
+      - ./workflows:/workflows
+      # --- NUEVO BIND MOUNT PARA EL SCRIPT ---
+      # Mapea nuestro script de entrypoint personalizado.
+      - ./docker-entrypoint.sh:/docker-entrypoint.sh
+    
+    # --- NUEVA SECCIÓN: ENTRYPOINT ---
+    # Sobrescribe el entrypoint por defecto de la imagen de Docker.
+    # Le decimos que ejecute nuestro script personalizado en su lugar.
+    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
+
+    networks:
+      - default # Se conecta a la red por defecto de este compose (buena práctica)
+      - zammad_network # Se conecta a nuestra red externa declarada abajo
+# --- NUEVA SECCIÓN AL FINAL DEL ARCHIVO ---
+# Aquí declaramos las redes que usamos.
+networks:
+  default: {} # Define la red por defecto para este servicio
+  zammad_network:
+    # Le decimos a Docker Compose que esta red ya existe y no debe intentar crearla.
+    external: true
+    # ¡CRÍTICO! Aquí pones el nombre real de la red que encontraste en el Paso 1.
+    name: zammad-n8n_default
