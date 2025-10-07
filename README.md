@@ -83,3 +83,23 @@ Para iniciar o detener el entorno, utiliza los siguientes comandos desde la raí
     ```bash
     docker-compose down
     ```
+
+
+# Pasos para integración
+ 1.  Instalar docker:
+  - sudo snap install docker
+ 2. Instalar contenedor de Zammad:
+  - git clone https://github.com/zammad/zammad-docker-compose.git
+  - cd zammad-docker-compose
+ 3. Acceder a n8n:
+  - Abre tu navegador y ve a `http://localhost:5678`
+ 4. Levantar contenedor:
+  - docker compose up -d
+ 5. Acceder a Zammad:
+ - Abre tu navegador y ve a `http://localhost:8080`
+ 6. Crear usuario en Zammad:
+ - Haz clic en "Registrarse" y completa el formulario.
+  7. Configurar credenciales en n8n:
+  - Editar archivo docker-compose.yml
+
+# token admin zammad: ""
