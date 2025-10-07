@@ -8,7 +8,5 @@ EXPOSE 5678
 
 # Copia el script de entrada personalizado
 COPY docker-entrypoint.sh /docker-entrypoint.sh
-# Da permisos de ejecución
-RUN chmod +x /docker-entrypoint.sh
 # Usa el script como entrypoint
 ENTRYPOINT ["/docker-entrypoint.sh"]
